@@ -1,0 +1,559 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        /* import url font */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+}
+body{
+    background: #242424;
+}
+section{
+    height: 100vh;
+    /* display: flex;
+    align-items: center;
+    justify-content: center; */
+}
+section .container{
+    width: 80%;
+    margin: 0 auto;
+    max-width: 1000px;
+}
+section .header{
+    padding-top: 50px;
+    padding-bottom: 50px
+}
+section .header h1{
+    width: fit-content;
+    font-size: 50px;
+    background-clip: text;
+    background: linear-gradient(to left , cyan , magenta);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-left: 0 auto, 100px;
+}
+section .header h2{
+    font-size: 50px;
+    color: #e3e3e3;
+}
+section .header p{
+    color: #a6a6a6;
+    font-size: 35px;
+}
+
+.typing_form{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: #242424;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.typing_form .input_wrapper{
+    width: 80%;
+    max-width: 1000px;
+    position: relative;
+}
+.typing_form .input_wrapper input{
+    width: 100%;
+    height: 100%;
+    padding: 17px 25px 17px 120px;
+    outline: none;
+    border: none;
+    font-size: 15px;
+    border-radius: 30px;
+    color: #e3e3e3;;
+    background: #383838;
+    transition: 0.3s ease;
+    box-shadow: 0
+}
+.typing_form .input_wrapper .send_btn{
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(to left, cyan, magenta);
+    outline: none;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: #fff;
+    font-weight: bold;
+    opacity: 0;
+    transition: 0.3s ease;
+}
+.typing_form .input_wrapper input:focus{
+    background: #444;
+}
+.typing_form .input_wrapper input:valid ~ .send_btn{
+    opacity: 1;
+}
+.chat_list{
+    margin-top: 80px;
+    height: auto;
+    padding-bottom: 120px;
+}
+.chat_list .message{
+    margin-bottom: 30px;
+}
+.chat_list .message_content{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.chat_list .message_content img{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    align-self: flex-start;
+}
+.chat_list .message_content .text{
+    color: #e3e3e3;
+    white-space: pre-wrap;
+}
+.chat_list .message .message_time{
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+    text-align: left;
+    direction: ltr;
+}
+.chat_list .message span{
+    color: #444;
+    cursor: pointer;
+    margin-right: 50px;
+    font-size: 20px;
+    margin-top: 5px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+.chat_list .message:hover span{
+    color: #e3e3e3;
+
+}
+.chat_list .message .loading_indicator{
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+}
+.chat_list .message.loading .loading_indicator{
+    display: flex;
+}
+
+.chat_list .message .loading_indicator .loading_bar{
+    height: 11px;
+    width: 100%;
+    background: linear-gradient(to left, #4285f4, #242424, #4285f4);
+    background-position: -800px 0;
+    animation: loading 3s linear infinite;
+}
+.chat_list .message .loading_indicator .loading_bar:last-child{
+    width: 70%;
+}
+.chat_list .message .delete_checkbox{
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #ff4444;
+    opacity: 0;
+    transition: 0.3s ease;
+}
+.chat_list .message:hover .delete_checkbox,
+.chat_list .message.selected .delete_checkbox{
+    opacity: 1;
+}
+.chat_list .message.selected{
+    background: rgba(255, 68, 68, 0.1);
+    border-radius: 10px;
+}
+.chat_list .message{
+    position: relative;
+    padding: 10px;
+    transition: 0.3s ease;
+}
+.delete_selected_btn{
+    display: none;
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+}
+.delete_selected_btn.visible{
+    display: block;
+    animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ai Agent | Python</title>
+    <!-- File Css -->
+     <!-- <link rel="stylesheet" href="style.css"> -->
+     <link rel="shortcut icon" href="Images/robot1.png">
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=content_copy" />
+
+  
+</head>
+<body dir="rtl">
+     <section>
+        <div class="container">
+            <div class="header">
+                <h1>وكيل الذكاء الاصطناعي حل المشكلات</h1>
+                <h2>مرحباً بك</h2>
+                <p>كيف يمكنني مساعدتك اليوم في حل المشكلات البرمجية؟</p>
+            </div>
+
+            <div class="chat_list"></div>
+
+            <button id="deleteSelectedBtn" class="delete_selected_btn" onClick="deleteSelectedMessages()"></button>
+
+            <form action="#" class="typing_form">
+                <div class="input_wrapper">
+                    <input type="text" class="typing_input" placeholder="اكتب سؤالك هنا" required>
+                    <button type="submit" class="send_btn">ارسال</button>
+                </div>
+            </form>
+
+            </div>
+        </div>
+     </section>
+
+
+
+    <!-- File JavaScript -->
+     <!-- <script src = "main.js"></script> -->
+      <script>
+        // System prompt to restrict AI responses
+const SYSTEM_PROMPT = `ارشدني خطوة بخطوة لحل المشكلة دون اعطائي الحل النهائي.
+لغة البرمجة المستخدمة Python.
+لا تكتب كود برمجة`;
+
+const typing_form = document.querySelector('.typing_form');
+const chat_list = document.querySelector('.chat_list');
+
+// Load chat history from localStorage or initialize empty array
+let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+
+// 20 API keys for rotation
+const API_KEYS = [
+    "AIzaSyCLr5JjZ6uR7Tcd-_3w0ktYPJ2reWQKPx0",
+    "AIzaSyCQxwripuo8fqicdLjb4Ido4FyAOnsPwW4", 
+    "AIzaSyEe8aH7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyFf9aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyGg8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyHh8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyIi8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyJj8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyKk8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyLl8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyMm8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyNn8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyOo8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyPp8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyQq8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyRr8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSySs8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyTt8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyUu8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyVv8aF7zzzzzzzzzzzzzzzzzzz"
+];
+
+// Load key rotation state from localStorage or initialize
+let keyState = JSON.parse(localStorage.getItem('apiKeyState')) || {
+    currentIndex: 0,
+    usageCount: 0,
+    maxUsagePerKey: 10
+};
+
+const getCurrentAPIKey = () => API_KEYS[keyState.currentIndex];
+const getAPI_URL = () => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${getCurrentAPIKey()}`;
+
+const rotateKey = () => {
+    keyState.usageCount++;
+    
+    if (keyState.usageCount >= keyState.maxUsagePerKey) {
+        keyState.currentIndex = (keyState.currentIndex + 1) % API_KEYS.length;
+        keyState.usageCount = 0;
+    }
+    
+    localStorage.setItem('apiKeyState', JSON.stringify(keyState));
+    console.log(`Using key index: ${keyState.currentIndex}, usage: ${keyState.usageCount}/${keyState.maxUsagePerKey}`);
+};
+
+const showTypingEffect = (text, textElement) => {
+    const words = text.split(' ');
+    let currentWordIndex = 0;
+    const typingInterval = setInterval(() => {
+        textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
+        if (currentWordIndex === words.length) {
+            clearInterval(typingInterval);
+        }
+        
+        window.scrollTo(0, chat_list.scrollHeight);
+    },75);
+}
+
+// Save chat history to localStorage
+const saveChatHistory = () => {
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+};
+
+// Track selected message indices
+let selectedMessages = new Set();
+
+// Toggle message selection
+const toggleMessageSelection = (index, checkbox) => {
+    if (checkbox.checked) {
+        selectedMessages.add(index);
+    } else {
+        selectedMessages.delete(index);
+    }
+    updateDeleteButtonVisibility();
+};
+
+// Delete selected messages
+const deleteSelectedMessages = () => {
+    if (selectedMessages.size === 0) return;
+    
+    // Convert Set to sorted array (descending) to delete from end first
+    const indicesToDelete = Array.from(selectedMessages).sort((a, b) => b - a);
+    
+    // Remove from chatHistory
+    indicesToDelete.forEach(index => {
+        chatHistory.splice(index, 1);
+    });
+    
+    // Remove from DOM
+    indicesToDelete.forEach(index => {
+        const messages = document.querySelectorAll('.chat_list .message');
+        if (messages[index]) {
+            messages[index].remove();
+        }
+    });
+    
+    // Reset selection and save
+    selectedMessages.clear();
+    saveChatHistory();
+    updateDeleteButtonVisibility();
+};
+
+// Update delete button visibility
+const updateDeleteButtonVisibility = () => {
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+        if (selectedMessages.size > 0) {
+            deleteBtn.classList.add('visible');
+            deleteBtn.textContent = `حذف الرسائل المحددة (${selectedMessages.size})`;
+        } else {
+            deleteBtn.classList.remove('visible');
+        }
+    }
+};
+
+// Render chat history on page load
+const renderChatHistory = () => {
+    chatHistory.forEach((msg, index) => {
+        const date = new Date(msg.timestamp);
+        const timeStr = date.toLocaleString('ar-EG', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        const html = msg.isOutgoing ? `
+            <div class="message_content">
+                <img src="Images/user.png" alt="">
+                <p class="text">${msg.text}</p>
+            </div>
+        ` : `
+            <div class="message_content">
+                <img src="Images/robot1.png" alt="">
+                <p class="text">${msg.text}</p>
+                <div class="message_time">${timeStr}</div>
+            </div>
+        `;
+        
+        const div = document.createElement('div');
+        div.classList.add('message', msg.isOutgoing ? 'outgoing' : 'incoming');
+        div.innerHTML = html + 
+            `<input type="checkbox" class="delete_checkbox" data-index="${index}" onClick="toggleMessageSelection(${index}, this)">` +
+            '<span onClick="copyMessage(this)" class="material-symbols-outlined">content_copy</span>';
+        chat_list.appendChild(div);
+    });
+    window.scrollTo(0, chat_list.scrollHeight);
+};
+
+// Render chat history on page load
+renderChatHistory();
+
+const generateAPIResponse = async (div) => {
+    const textElement = div.querySelector('.text');
+    const checkbox = div.querySelector('.delete_checkbox');
+    
+    try {
+        const response = await fetch(getAPI_URL(), {
+            method: 'POST',
+            headers:{"content-type":"application/json"},
+            body:JSON.stringify({
+                system_instruction: {
+                    parts: [{text: SYSTEM_PROMPT}]
+                },
+                contents:[{
+                    role: "user",
+                    parts: [{text: userMessage}]
+                }]
+            })
+        })
+
+        const data = await response.json();
+        const apiResponse = data?.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g,'$1');
+        
+        // Save bot response to history
+        chatHistory.push({
+            text: apiResponse,
+            isOutgoing: false,
+            timestamp: Date.now()
+        });
+        const botMessageIndex = chatHistory.length - 1;
+        
+        // Update checkbox with correct index
+        if (checkbox) {
+            checkbox.setAttribute('data-index', botMessageIndex);
+            checkbox.onclick = () => toggleMessageSelection(botMessageIndex, checkbox);
+        }
+        
+        saveChatHistory();
+        
+        showTypingEffect(apiResponse, textElement);
+        console.log(apiResponse);
+        
+        // Rotate key after successful request
+        rotateKey();
+
+    } catch (error) {
+        console.log(error);
+        // Also rotate key on error (quota exceeded)
+        rotateKey();
+    }
+    finally{
+        div.classList.remove('loading');
+    }
+}
+
+const copyMessage = (copy_btn) => {
+    const messageText= copy_btn.parentElement.querySelector('.text').innerText;
+    navigator.clipboard.writeText(messageText);
+    copy_btn.innerText = "done";
+}
+
+const showLoading = () => {
+    // Bot message will be added to chatHistory in generateAPIResponse
+    // Temporarily store placeholder index
+    const tempIndex = chatHistory.length;
+    
+    const html = `
+        <div class="message_content">
+                        <img src="Images/robot1.png" alt="">
+                        <p class="text"></p>
+                        <div class="loading_indicator">
+                            <div class="loading_bar"></div>
+                            <div class="loading_bar"></div>
+                            <div class="loading_bar"></div>
+                        </div>
+                    </div>
+                    <input type="checkbox" class="delete_checkbox" data-index="${tempIndex}" onClick="toggleMessageSelection(${tempIndex}, this)">
+                    <span onClick= "copyMessage(this)" class="material-symbols-outlined">
+                        content_copy
+                    </span>
+                    
+    `
+    const div = document.createElement('div');
+    div.classList.add('message', 'incoming', 'loading');
+    div.innerHTML = html;
+
+    chat_list.appendChild(div);
+    window.scrollTo(0, chat_list.scrollHeight);
+
+    generateAPIResponse(div);
+}
+
+const handleOutGoingChat = () => {
+    userMessage = document.querySelector('.typing_input').value;
+    console.log(userMessage);
+
+    if(!userMessage) return;
+    
+    // Save user message to history
+    chatHistory.push({
+        text: userMessage,
+        isOutgoing: true,
+        timestamp: Date.now()
+    });
+    saveChatHistory();
+    
+    const messageIndex = chatHistory.length - 1;
+    
+    const html = `
+        <div class="message_content">
+                        <img src="Images/user.png" alt="">
+                        <p class="text"></p>
+        </div>
+        <input type="checkbox" class="delete_checkbox" data-index="${messageIndex}" onClick="toggleMessageSelection(${messageIndex}, this)">
+    `
+
+    const div = document.createElement('div');
+    div.classList.add('message', 'outgoing');
+    div.innerHTML = html;
+
+    div.querySelector('.text').innerHTML = userMessage;
+    chat_list.appendChild(div);
+    typing_form.reset();
+    window.scrollTo(0, chat_list.scrollHeight);
+    setTimeout(showLoading, 500);
+}
+
+typing_form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleOutGoingChat();
+});
+      </script>
+</body>
+</html>
