@@ -1,0 +1,427 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ai Agent | Python</title>
+    <!-- File Css -->
+     <link rel="stylesheet" href="style.css">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+     <link rel="shortcut icon" href="Images/robot1.png">
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=content_copy" />
+
+  
+</head>
+<body dir="rtl" class="agent-page">
+<nav class="top-nav">
+    <div class="nav-container">
+        <a href="index.html" class="nav-action-btn" title="العودة للصفحة الرئيسية">
+                    <i class="fas fa-home"></i>
+                    الرئيسية
+        </a>
+        <a href="content.html" class="nav-action-btn">
+                    <i class="fas fa-graduation-cap"></i>
+                    المنصة التعليمية
+        </a>
+        
+    </div>
+</nav>
+
+<section>
+         <div class="container">
+             <div class="Agentheader">
+                 <h1>المساعد الذكي العام</h1>
+                 <h2>مرحباً بك في واحة المعرفة</h2>
+                 <p>أنا هنا للإجابة على جميع استفساراتك حول لغة بايثون، شرح المفاهيم النظرية، أو تقديم أي استشارة تقنية تحتاجها في رحلتك التعليمية.</p>
+             </div>
+ 
+             <div class="chat_list"></div>
+ 
+             <button id="deleteSelectedBtn" class="delete_selected_btn" onClick="deleteSelectedMessages()"></button>
+ 
+             <form action="#" class="typing_form">
+                 <div class="input_wrapper">
+                     <input type="text" class="typing_input" placeholder="اكتب سؤالك هنا" required>
+                     <button type="submit" class="send_btn"><i class="fas fa-paper-plane"></i> ارسال</button>
+                 </div>
+             </form>
+
+            </div>
+        </div>
+     </section>
+
+
+
+    <!-- File JavaScript -->
+     <!-- <script src = "main.js"></script> -->
+      <script>
+        // دالة لإنتاج صوت UI خفيف عند ظهور العناصر
+        const playArrivalSound = () => {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                masterGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                masterGain.connect(audioCtx.destination);
+
+                const playNote = (freq, start, duration) => {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+                    osc.connect(masterGain);
+                    osc.start(audioCtx.currentTime + start);
+                    osc.stop(audioCtx.currentTime + start + duration);
+                };
+
+                playNote(523.25, 0, 0.1); 
+                playNote(659.25, 0.1, 0.1);
+                playNote(783.99, 0.2, 0.5);
+            } catch (e) {
+                console.log("Audio playback blocked");
+            }
+        };
+
+        // System prompt to restrict AI responses
+const SYSTEM_PROMPT = ``;
+
+const typing_form = document.querySelector('.typing_form');
+const chat_list = document.querySelector('.chat_list');
+
+// Get current user to create user-specific storage keys
+const currentUser = JSON.parse(localStorage.getItem('pythonPlatformCurrentUser')) || JSON.parse(sessionStorage.getItem('pythonPlatformCurrentUser'));
+const username = currentUser ? currentUser.username : 'guest_ai'; // Fallback to a generic guest key
+const isAdmin = currentUser && currentUser.isAdmin === true;
+
+// Restrict delete checkboxes and button for non-admin users
+if (!isAdmin) {
+    const style = document.createElement('style');
+    style.textContent = '.delete_checkbox { display: none !important; }';
+    document.head.appendChild(style);
+}
+
+// Load chat history from localStorage or initialize empty array
+let chatHistory = JSON.parse(localStorage.getItem(`chatHistory_ai_${username}`)) || [];
+
+// 20 API keys for rotation
+const API_KEYS = [
+    "AIzaSyCLr5JjZ6uR7Tcd-_3w0ktYPJ2reWQKPx0",
+    "AIzaSyCQxwripuo8fqicdLjb4Ido4FyAOnsPwW4", 
+    "AIzaSyB_EcRVab1ym6jLLlmngpFv-1mkYNYDt6Y",
+    "AIzaSyFf9aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyGg8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyHh8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyIi8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyJj8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyKk8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyLl8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyMm8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyNn8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyOo8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyPp8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyQq8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyRr8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSySs8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyTt8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyUu8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyVv8aF7zzzzzzzzzzzzzzzzzzz"
+];
+
+// Load key rotation state from localStorage or initialize
+let keyState = JSON.parse(localStorage.getItem(`apiKeyState_ai_${username}`)) || {
+    currentIndex: 0,
+    usageCount: 0,
+    maxUsagePerKey: 10
+};
+
+const getCurrentAPIKey = () => 'sk-ed32202ab7cf4936593a205f4d504b9156937ff9a7227f49';
+const getAPI_URL = () => 'https://soal.help/api/v1/chat/completions';
+
+const rotateKey = () => {
+    keyState.usageCount++;
+    
+    if (keyState.usageCount >= keyState.maxUsagePerKey) {
+        keyState.currentIndex = (keyState.currentIndex + 1) % API_KEYS.length;
+        keyState.usageCount = 0;
+    }
+    
+    localStorage.setItem(`apiKeyState_ai_${username}`, JSON.stringify(keyState));
+    console.log(`Using key index: ${keyState.currentIndex}, usage: ${keyState.usageCount}/${keyState.maxUsagePerKey}`);
+};
+
+const showTypingEffect = (text, textElement) => {
+    const words = text.split(' ');
+    let currentWordIndex = 0;
+    const typingInterval = setInterval(() => {
+        textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
+        if (currentWordIndex === words.length) {
+            clearInterval(typingInterval);
+        }
+        
+        window.scrollTo(0, chat_list.scrollHeight);
+    },75);
+}
+
+// Save chat history to localStorage
+const saveChatHistory = () => {
+    localStorage.setItem(`chatHistory_ai_${username}`, JSON.stringify(chatHistory));
+};
+
+// Track selected message indices
+let selectedMessages = new Set();
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    let iconClass = 'fas fa-info-circle';
+    if (type === 'success') iconClass = 'fas fa-check-circle';
+    else if (type === 'error') iconClass = 'fas fa-times-circle';
+    toast.innerHTML = `<i class="${iconClass}"></i> <span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// Toggle message selection
+const toggleMessageSelection = (index, checkbox) => {
+    if (checkbox.checked) {
+        selectedMessages.add(index);
+    } else {
+        selectedMessages.delete(index);
+    }
+    updateDeleteButtonVisibility();
+};
+
+// Delete selected messages
+const deleteSelectedMessages = () => {
+    if (!isAdmin) {
+        showToast('هذا الإجراء محصور على مدير الموقع فقط', 'error');
+        return;
+    }
+    if (selectedMessages.size === 0) return;
+    
+    // Convert Set to sorted array (descending) to delete from end first
+    const indicesToDelete = Array.from(selectedMessages).sort((a, b) => b - a);
+    
+    // Remove from chatHistory
+    indicesToDelete.forEach(index => {
+        chatHistory.splice(index, 1);
+    });
+    
+    // Remove from DOM
+    indicesToDelete.forEach(index => {
+        const messages = document.querySelectorAll('.chat_list .message');
+        if (messages[index]) {
+            messages[index].remove();
+        }
+    });
+    
+    // Reset selection and save
+    selectedMessages.clear();
+    saveChatHistory();
+    updateDeleteButtonVisibility();
+};
+
+// Update delete button visibility
+const updateDeleteButtonVisibility = () => {
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+        if (!isAdmin) {
+            deleteBtn.classList.remove('visible');
+            deleteBtn.style.display = 'none';
+            return;
+        }
+        if (selectedMessages.size > 0) {
+            deleteBtn.classList.add('visible');
+            deleteBtn.textContent = `حذف الرسائل المحددة (${selectedMessages.size})`;
+        } else {
+            deleteBtn.classList.remove('visible');
+        }
+    }
+};
+
+// Render chat history on page load
+const renderChatHistory = () => {
+    chatHistory.forEach((msg, index) => {
+        const date = new Date(msg.timestamp);
+        const timeStr = date.toLocaleString('ar-EG', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        const html = msg.isOutgoing ? `
+            <div class="message_content">
+                <img src="Images/user.png" alt="">
+                <p class="text">${msg.text}</p>
+            </div>
+        ` : `
+            <div class="message_content">
+                <img src="Images/robot1.png" alt="">
+                <p class="text">${msg.text}</p>
+                <div class="message_time">${timeStr}</div>
+            </div>
+        `;
+        
+        const div = document.createElement('div');
+        div.classList.add('message', msg.isOutgoing ? 'outgoing' : 'incoming');
+        div.innerHTML = html + 
+            `<input type="checkbox" class="delete_checkbox" data-index="${index}" onClick="toggleMessageSelection(${index}, this)">` +
+            '<span onClick="copyMessage(this)" class="material-symbols-outlined">content_copy</span>';
+        chat_list.appendChild(div);
+    });
+    window.scrollTo(0, chat_list.scrollHeight);
+};
+
+// Render chat history on page load
+renderChatHistory();
+
+const generateAPIResponse = async (div) => {
+    const textElement = div.querySelector('.text');
+    const checkbox = div.querySelector('.delete_checkbox');
+    
+    try {
+        const response = await fetch(getAPI_URL(), {
+            method: 'POST',
+            headers: {
+                "content-type": "application/json",
+                "Authorization": `Bearer ${getCurrentAPIKey()}`
+            },
+                body: JSON.stringify({
+                    model: "claude-sonnet-4-6",
+                    messages: [
+                        { role: "system", content: SYSTEM_PROMPT },
+                        { role: "user", content: userMessage }
+                    ],
+                    temperature: 0.7
+                })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const apiResponse = data?.choices[0]?.message?.content?.replace(/\*\*(.*?)\*\*/g,'$1');
+        if (!apiResponse) {
+            throw new Error('استجابة فارغة من الخادم');
+        }
+        
+        // Save bot response to history
+        chatHistory.push({
+            text: apiResponse,
+            isOutgoing: false,
+            timestamp: Date.now()
+        });
+        const botMessageIndex = chatHistory.length - 1;
+        
+        // Update checkbox with correct index
+        if (checkbox) {
+            checkbox.setAttribute('data-index', botMessageIndex);
+            checkbox.onclick = () => toggleMessageSelection(botMessageIndex, checkbox);
+        }
+        
+        saveChatHistory();
+        
+        showTypingEffect(apiResponse, textElement);
+        console.log(apiResponse);
+        
+        // Rotate key after successful request
+        rotateKey();
+
+    } catch (error) {
+        console.log(error);
+        textElement.innerHTML = `<span style="color: var(--warning);">حدث خطأ: ${error.message}. يرجى المحاولة مرة أخرى.</span>`;
+        rotateKey();
+    }
+    finally{
+        div.classList.remove('loading');
+    }
+}
+
+const copyMessage = (copy_btn) => {
+    const messageText= copy_btn.parentElement.querySelector('.text').innerText;
+    navigator.clipboard.writeText(messageText);
+    copy_btn.innerText = "done";
+}
+
+const showLoading = () => {
+    // Bot message will be added to chatHistory in generateAPIResponse
+    // Temporarily store placeholder index
+    const tempIndex = chatHistory.length;
+    
+    const html = `
+        <div class="message_content">
+                        <img src="Images/robot1.png" alt="">
+                        <p class="text"></p>
+                        <div class="loading_indicator">
+                            <div class="loading_bar"></div>
+                            <div class="loading_bar"></div>
+                            <div class="loading_bar"></div>
+                        </div>
+                    </div>
+                    <input type="checkbox" class="delete_checkbox" data-index="${tempIndex}" onClick="toggleMessageSelection(${tempIndex}, this)">
+                    <span onClick= "copyMessage(this)" class="material-symbols-outlined">
+                        content_copy
+                    </span>
+                    
+    `
+    const div = document.createElement('div');
+    div.classList.add('message', 'incoming', 'loading');
+    div.innerHTML = html;
+
+    chat_list.appendChild(div);
+    window.scrollTo(0, chat_list.scrollHeight);
+
+    generateAPIResponse(div);
+}
+
+const handleOutGoingChat = () => {
+    userMessage = document.querySelector('.typing_input').value;
+    console.log(userMessage);
+
+    if(!userMessage) return;
+    
+    // Save user message to history
+    chatHistory.push({
+        text: userMessage,
+        isOutgoing: true,
+        timestamp: Date.now()
+    });
+    saveChatHistory();
+    
+    const messageIndex = chatHistory.length - 1;
+    
+    const html = `
+        <div class="message_content">
+                        <img src="Images/user.png" alt="">
+                        <p class="text"></p>
+        </div>
+        <input type="checkbox" class="delete_checkbox" data-index="${messageIndex}" onClick="toggleMessageSelection(${messageIndex}, this)">
+    `
+
+    const div = document.createElement('div');
+    div.classList.add('message', 'outgoing');
+    div.innerHTML = html;
+
+    div.querySelector('.text').innerHTML = userMessage;
+    chat_list.appendChild(div);
+    typing_form.reset();
+    window.scrollTo(0, chat_list.scrollHeight);
+    setTimeout(showLoading, 500);
+}
+
+typing_form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleOutGoingChat();
+});
+
+// تشغيل الصوت عند تحميل الصفحة
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(playArrivalSound, 300);
+});
+      </script>
+</body>
+</html>
