@@ -1,0 +1,733 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ai Agent | Python</title>
+    <!-- File Css -->
+     <link rel="stylesheet" href="style.css">
+     <link rel="stylesheet" href="content.css">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+     <link rel="shortcut icon" href="Images/robot1.png">
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=content_copy" />
+
+  
+</head>
+<body dir="rtl" class="agent-page prog-agent">
+<nav class="top-nav">
+    <div class="nav-container">
+         <a href="index.html" class="nav-action-btn" title="العودة للصفحة الرئيسية">
+                    <i class="fas fa-home"></i>
+                    الرئيسية
+        </a>
+        <a href="content.html" class="nav-action-btn">
+                    <i class="fas fa-graduation-cap"></i>
+                    المنصة التعليمية
+        </a>
+    </div>
+</nav>
+
+<section>
+         <div class="container">
+             <div class="Agentheader">
+                 <h1>المبرمج الذكي</h1>
+                 <h2>مرحباً بك في بيئة التطوير الذكية</h2>
+                 <p>أنا شريكك في كتابة وتحسين أكواد بايثون. اطلب مني بناء دوال، حل منطق برمجي معين، أو تحويل أفكارك إلى أكواد نظيفة وفعالة.</p>
+             </div>
+ 
+             <div class="chat_list"></div>
+ 
+             <button id="deleteSelectedBtn" class="delete_selected_btn" onClick="deleteSelectedMessages()"></button>
+ 
+             <form action="#" class="typing_form">
+                 <div class="input_wrapper">
+                     <input type="text" class="typing_input" placeholder="اكتب سؤالك هنا" required>
+                     <button type="submit" class="btn btn-primary send_btn"><i class="fas fa-code"></i> إرسال الكود</button>
+                 </div>
+             </form>
+
+            </div>
+        </div>
+     </section>
+
+    <!-- Python Interpreter Modal -->
+    <div class="modal-overlay" id="interpreter-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🐍 مترجم بايثون التفاعلي</span>
+                <button class="modal-close" onclick="closeInterpreter()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="interpreter-container">
+                    <div class="interpreter-main-area">
+                        <div class="interpreter-input-container">
+                            <div class="line-numbers" id="line-numbers-modal">1</div>
+                            <div id="highlight-modal" class="highlight-backdrop"></div>
+                            <textarea id="code-input-modal" class="code-textarea" placeholder="# اكتب كود بايثون هنا..." oninput="updateLineNumbers(this, 'line-numbers-modal'); updateEditorHighlighting(this)" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
+                        </div>
+                        <div class="interpreter-output" id="interpreter-output-modal">
+                            <div id="output-content-modal" style="white-space: pre-wrap; font-family: 'Fira Code', monospace; color: #e0e0e0; font-size: 14px; line-height: 1.6;"># مخرجات التنفيذ ستظهر هنا...</div>
+                        </div>
+                    </div>
+                    <div class="interpreter-actions" style="margin-top: 15px;">
+                        <button class="run-btn" onclick="runPythonCode('modal')">
+                            <i class="fas fa-play"></i> تشغيل
+                        </button>
+                        <button class="stop-btn" onclick="stopCode()" style="display:none;">
+                            <i class="fas fa-stop"></i> إيقاف
+                        </button>
+                        <button class="fullscreen-btn" onclick="toggleFullscreen('interpreter-modal')">
+                            <i class="fas fa-expand"></i> تكبير
+                        </button>
+                        <button class="collapse-output-btn" onclick="toggleOutput('interpreter-output-modal', this)">
+                            <i class="fas fa-eye-slash"></i> إخفاء النتائج
+                        </button>
+                        <button class="clear-btn" onclick="clearOutput('modal')">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                        <!-- New font size control -->
+                        <div class="font-size-control" style="display: flex; align-items: center; gap: 5px; margin-right: auto;">
+                            <label for="font-size-select-modal" style="color: var(--text-secondary);">حجم الخط:</label>
+                            <select id="font-size-select-modal" onchange="changeInterpreterFontSize(this.value, 'modal')" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                                <option value="12px">صغير (12px)</option>
+                                <option value="14px" selected>متوسط (14px)</option>
+                                <option value="16px">كبير (16px)</option>
+                                <option value="18px">أكبر (18px)</option>
+                                <option value="20px">ضخم (20px)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Input Modal for input() function -->
+    <div class="modal-overlay" id="custom-input-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">إدخال المستخدم</span>
+                <button class="modal-close" onclick="cancelCustomInput()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="custom-input-prompt" style="margin-bottom: 15px; color: var(--text-primary);"></p>
+                <input type="text" id="custom-input-field" class="form-group input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);" onkeydown="if(event.key==='Enter') submitCustomInput()">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="submitCustomInput()">إرسال</button>
+                    <button class="btn btn-secondary" onclick="cancelCustomInput()">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+
+    <!-- File JavaScript -->
+     <!-- <script src = "main.js"></script> -->
+      <script>
+        let pyodideInstance = null;
+        let isPyodideLoading = false;
+        let userMessage = "";
+
+        // دالة لإنتاج صوت UI خفيف عند ظهور العناصر
+        const playArrivalSound = () => {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                masterGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                masterGain.connect(audioCtx.destination);
+
+                const playNote = (freq, start, duration) => {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+                    osc.connect(masterGain);
+                    osc.start(audioCtx.currentTime + start);
+                    osc.stop(audioCtx.currentTime + start + duration);
+                };
+
+                // نغمة متصاعدة خفيفة (C5 -> E5 -> G5)
+                playNote(523.25, 0, 0.1); 
+                playNote(659.25, 0.1, 0.1);
+                playNote(783.99, 0.2, 0.5);
+            } catch (e) {
+                console.log("Audio playback blocked or not supported");
+            }
+        };
+
+        // System prompt to restrict AI responses
+const SYSTEM_PROMPT = `اكتب كود البرمجة بلغة البايثون.
+لغة البرمجة المستخدمة Python.
+لا تعطي شرح لخطوات حل للمشكلة
+لا تشرح كود البرمجة`;
+
+const typing_form = document.querySelector('.typing_form');
+const chat_list = document.querySelector('.chat_list');
+
+// Get current user to create user-specific storage keys
+const currentUser = JSON.parse(localStorage.getItem('pythonPlatformCurrentUser')) || JSON.parse(sessionStorage.getItem('pythonPlatformCurrentUser'));
+const username = currentUser ? currentUser.username : 'guest_prog'; // Fallback to a generic guest key
+const isAdmin = currentUser && currentUser.isAdmin === true;
+
+// Restrict delete checkboxes and button for non-admin users
+if (!isAdmin) {
+    const style = document.createElement('style');
+    style.textContent = '.delete_checkbox { display: none !important; }';
+    document.head.appendChild(style);
+}
+
+// Load chat history from localStorage or initialize empty array
+let chatHistory = JSON.parse(localStorage.getItem(`chatHistory_prog_${username}`)) || [];
+
+// 20 API keys for rotation
+const API_KEYS = [
+    "AQ.Ab8RN6K22RhjcywmOFE91fqWUPk4jMQ5d3olhz244XacGpZlZQ",
+    "AQ.Ab8RN6IeMwQNrnTvwp9kdkl8BUcg8mBVrPirb2ByPIFsArVrWw", 
+    "AQ.Ab8RN6Kg8vb-ogWMVpUVtVE_aEVzR3LYdfd9Ojjh2io4gG1PIQ",
+    "AIzaSyFf9aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyGg8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyHh8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyIi8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyJj8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyKk8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyLl8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyMm8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyNn8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyOo8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyPp8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyQq8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyRr8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSySs8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyTt8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyUu8aF7zzzzzzzzzzzzzzzzzzz",
+    "AIzaSyVv8aF7zzzzzzzzzzzzzzzzzzz"
+];
+
+// Load key rotation state from localStorage or initialize
+let keyState = JSON.parse(localStorage.getItem(`apiKeyState_prog_${username}`)) || {
+    currentIndex: 0,
+    usageCount: 0,
+    maxUsagePerKey: 10
+};
+
+// دالة لتلوين كود البايثون وتحويله لتنسيق يشبه محرر الأكواد
+const highlightPython = (code) => {
+    if (!code) return "";
+
+    const escapeHtml = (text) => {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, (m) => map[m]);
+    };
+
+    // Regex مدمج للتعامل مع النصوص، التعليقات، الكلمات المحجوزة، الأرقام، والدوال بالترتيب الصحيح
+    const combinedRegex = new RegExp(
+        '(' +
+        // 1. النصوص (بما في ذلك النصوص متعددة الأسطر)
+        '"{3}[\\s\\S]*?"{3}|\'{3}[\\s\\S]*?\'{3}|"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'' +
+        '|' +
+        // 2. التعليقات
+        '#.*' +
+        '|' +
+        // 3. الكلمات المحجوزة
+        '\\b(def|class|if|else|elif|for|while|return|import|from|as|try|except|finally|with|global|nonlocal|lambda|None|True|False|and|or|not|in|is|break|continue|pass|raise|async|await|del|assert|yield)\\b' +
+        '|' +
+        // 4. الأرقام
+        '\\b\\d+\\b' +
+        '|' +
+        // 5. أسماء الدوال (كلمة تليها قوس)
+        '\\b(\\w+)(?=\\()' +
+        ')', 'g'
+    );
+
+    return escapeHtml(code).replace(combinedRegex, (match, group1, keyword, funcName) => {
+        if (match.startsWith('"') || match.startsWith("'")) {
+            return `<span class="string">${match}</span>`;
+        } else if (match.startsWith('#')) {
+            return `<span class="comment">${match}</span>`;
+        } else if (keyword) {
+            return `<span class="keyword">${match}</span>`;
+        } else if (/^\d+$/.test(match)) {
+            return `<span class="number">${match}</span>`;
+        } else if (funcName) {
+            return `<span class="function">${funcName}</span>`;
+        }
+        return match;
+    });
+};
+
+const getCurrentAPIKey = () => 'sk-ed32202ab7cf4936593a205f4d504b9156937ff9a7227f49';
+const getAPI_URL = () => 'https://soal.help/api/v1/chat/completions';
+
+const rotateKey = () => {
+    keyState.usageCount++;
+    
+    if (keyState.usageCount >= keyState.maxUsagePerKey) {
+        keyState.currentIndex = (keyState.currentIndex + 1) % API_KEYS.length;
+        keyState.usageCount = 0;
+    }
+    
+    localStorage.setItem(`apiKeyState_prog_${username}`, JSON.stringify(keyState));
+    console.log(`Using key index: ${keyState.currentIndex}, usage: ${keyState.usageCount}/${keyState.maxUsagePerKey}`);
+};
+
+const showTypingEffect = (text, textElement) => {
+    const words = text.split(' ');
+    let currentWordIndex = 0;
+    const typingInterval = setInterval(() => {
+        textElement.innerHTML += (currentWordIndex === 0 ? "" : " ") + words[currentWordIndex++];
+        if (currentWordIndex === words.length) {
+            clearInterval(typingInterval);
+        }
+        
+        window.scrollTo(0, chat_list.scrollHeight);
+    },75);
+}
+
+// Save chat history to localStorage
+const saveChatHistory = () => {
+    localStorage.setItem(`chatHistory_prog_${username}`, JSON.stringify(chatHistory));
+};
+
+// Track selected message indices
+let selectedMessages = new Set();
+
+// Toggle message selection
+const toggleMessageSelection = (index, checkbox) => {
+    if (checkbox.checked) {
+        selectedMessages.add(index);
+    } else {
+        selectedMessages.delete(index);
+    }
+    updateDeleteButtonVisibility();
+};
+
+// Delete selected messages
+const deleteSelectedMessages = () => {
+    if (!isAdmin) {
+        showToast('هذا الإجراء محصور على مدير الموقع فقط', 'error');
+        return;
+    }
+    if (selectedMessages.size === 0) return;
+    
+    // Convert Set to sorted array (descending) to delete from end first
+    const indicesToDelete = Array.from(selectedMessages).sort((a, b) => b - a);
+    
+    // Remove from chatHistory
+    indicesToDelete.forEach(index => {
+        chatHistory.splice(index, 1);
+    });
+    
+    // Remove from DOM
+    indicesToDelete.forEach(index => {
+        const messages = document.querySelectorAll('.chat_list .message');
+        if (messages[index]) {
+            messages[index].remove();
+        }
+    });
+    
+    // Reset selection and save
+    selectedMessages.clear();
+    saveChatHistory();
+    updateDeleteButtonVisibility();
+};
+
+// Update delete button visibility
+const updateDeleteButtonVisibility = () => {
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+        if (!isAdmin) {
+            deleteBtn.classList.remove('visible');
+            deleteBtn.style.display = 'none';
+            return;
+        }
+        if (selectedMessages.size > 0) {
+            deleteBtn.classList.add('visible');
+            deleteBtn.textContent = `حذف الرسائل المحددة (${selectedMessages.size})`;
+        } else {
+            deleteBtn.classList.remove('visible');
+        }
+    }
+};
+
+// Render chat history on page load
+const renderChatHistory = () => {
+    chatHistory.forEach((msg, index) => {
+        const date = new Date(msg.timestamp);
+        const timeStr = date.toLocaleString('ar-EG', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        const html = msg.isOutgoing ? `
+            <div class="message_content">
+                <img src="Images/user.png" alt="">
+                <p class="text">${msg.text}</p>
+            </div>
+        ` : `
+            <div class="message_content">
+                <img src="Images/robot1.png" alt="">
+                <p class="text">${msg.isOutgoing ? msg.text : highlightPython(msg.text)}</p>
+                <div class="message_time">${timeStr}</div>
+            </div>
+        `;
+        
+        const div = document.createElement('div');
+        div.classList.add('message', msg.isOutgoing ? 'outgoing' : 'incoming');
+        div.innerHTML = html + 
+            `<input type="checkbox" class="delete_checkbox" data-index="${index}" onClick="toggleMessageSelection(${index}, this)">` + // Checkbox
+            '<span onClick="copyMessage(this)" class="material-symbols-outlined" style="left: 15px;">content_copy</span>'; // Copy button
+        chat_list.appendChild(div);
+    });
+    window.scrollTo(0, chat_list.scrollHeight);
+};
+
+// Render chat history on page load
+renderChatHistory();
+
+const generateAPIResponse = async (div) => {
+    const textElement = div.querySelector('.text');
+    const checkbox = div.querySelector('.delete_checkbox');
+    
+    try {
+        const response = await fetch(getAPI_URL(), {
+            method: 'POST',
+            headers: {
+                "content-type": "application/json",
+                "Authorization": `Bearer ${getCurrentAPIKey()}`
+            },
+                body: JSON.stringify({
+                    model: "claude-sonnet-4-6",
+                    messages: [
+                        { role: "system", content: SYSTEM_PROMPT },
+                        { role: "user", content: userMessage }
+                    ],
+                    temperature: 0.7
+                })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        let apiResponse = data?.choices[0]?.message?.content;
+        if (!apiResponse) {
+            throw new Error('استجابة فارغة من الخادم');
+        }
+        apiResponse = apiResponse.replace(/```python|```/g, '').trim();
+        // إزالة التنسيق السميك التقليدي
+        apiResponse = apiResponse.replace(/\*\*(.*?)\*\*/g,'$1');
+        
+        // Save bot response to history
+        chatHistory.push({
+            text: apiResponse,
+            isOutgoing: false,
+            timestamp: Date.now()
+        });
+        const botMessageIndex = chatHistory.length - 1;
+        
+        // Update checkbox with correct index
+        if (checkbox) {
+            checkbox.setAttribute('data-index', botMessageIndex);
+            checkbox.onclick = () => toggleMessageSelection(botMessageIndex, checkbox);
+        }
+        
+        saveChatHistory();
+        
+        // عرض الكود الملون مباشرة لضمان سلامة التنسيق
+        textElement.innerHTML = highlightPython(apiResponse);
+        window.scrollTo(0, chat_list.scrollHeight);
+        console.log(apiResponse);
+        
+        // Rotate key after successful request
+        rotateKey();
+
+    } catch (error) {
+        console.log(error);
+        textElement.innerHTML = `<span style="color: var(--warning);">حدث خطأ: ${error.message}. يرجى المحاولة مرة أخرى.</span>`;
+        rotateKey();
+    }
+    finally{
+        div.classList.remove('loading');
+    }
+}
+
+const copyMessage = (copy_btn) => {
+    const messageText= copy_btn.parentElement.querySelector('.text').innerText;
+    navigator.clipboard.writeText(messageText);
+    copy_btn.innerText = "done";
+}
+
+const showLoading = () => {
+    // Bot message will be added to chatHistory in generateAPIResponse
+    // Temporarily store placeholder index
+    const tempIndex = chatHistory.length;
+    
+    const html = `
+        <div class="message_content">
+                        <img src="Images/robot1.png" alt="">
+                        <p class="text"></p>
+                        <div class="loading_indicator">
+                            <div class="loading_bar"></div>
+                            <div class="loading_bar"></div>
+                            <div class="loading_bar"></div>
+                        </div>
+                    </div>
+                    <input type="checkbox" class="delete_checkbox" data-index="${tempIndex}" onClick="toggleMessageSelection(${tempIndex}, this)">
+                    <span onClick= "copyMessage(this)" class="material-symbols-outlined">
+                        content_copy
+                    </span>
+                    
+    `
+    const div = document.createElement('div');
+    div.classList.add('message', 'incoming', 'loading');
+    div.innerHTML = html;
+
+    chat_list.appendChild(div);
+    window.scrollTo(0, chat_list.scrollHeight);
+
+    generateAPIResponse(div);
+}
+
+const handleOutGoingChat = () => {
+    userMessage = document.querySelector('.typing_input').value;
+    console.log(userMessage);
+
+    if(!userMessage) return;
+    
+    // Save user message to history
+    chatHistory.push({
+        text: userMessage,
+        isOutgoing: true,
+        timestamp: Date.now()
+    });
+    saveChatHistory();
+    
+    const messageIndex = chatHistory.length - 1;
+    
+    const html = `
+        <div class="message_content">
+                        <img src="Images/user.png" alt="">
+                        <p class="text"></p>
+        </div>
+        <input type="checkbox" class="delete_checkbox" data-index="${messageIndex}" onClick="toggleMessageSelection(${messageIndex}, this)">
+    `
+
+    const div = document.createElement('div');
+    div.classList.add('message', 'outgoing');
+    div.innerHTML = html;
+
+    div.querySelector('.text').innerHTML = userMessage;
+    chat_list.appendChild(div);
+    typing_form.reset();
+    window.scrollTo(0, chat_list.scrollHeight);
+    setTimeout(showLoading, 500);
+}
+
+typing_form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleOutGoingChat();
+});
+
+// تشغيل الصوت عند تحميل الصفحة ليتزامن مع الأنميشن
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(playArrivalSound, 300);
+});
+
+        // ============================================================================
+        // Python Interpreter & Utility Logic
+        // ============================================================================
+        
+        /**
+         * Displays a toast notification.
+         */
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type}`;
+            
+            let iconClass = 'fas fa-info-circle';
+            if (type === 'success') iconClass = 'fas fa-check-circle';
+            else if (type === 'error') iconClass = 'fas fa-times-circle';
+
+            toast.innerHTML = `<i class="${iconClass}"></i> <span>${message}</span>`;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        let interruptBuffer = null;
+        if (typeof SharedArrayBuffer !== "undefined") {
+            interruptBuffer = new Int32Array(new SharedArrayBuffer(4));
+        }
+
+        async function getPyodide() {
+            if (pyodideInstance) return pyodideInstance;
+            if (isPyodideLoading) {
+                while (isPyodideLoading) await new Promise(resolve => setTimeout(resolve, 100));
+                return pyodideInstance;
+            }
+            isPyodideLoading = true;
+            try {
+                const py = await loadPyodide();
+                if (interruptBuffer) py.setInterruptBuffer(interruptBuffer);
+                
+                await py.runPythonAsync(`
+                    import sys
+                    from js import window
+
+                    class OutputCapture:
+                        def __init__(self): self.buffer = ""
+                        def write(self, text):
+                            self.buffer += text
+                            if '\\n' in self.buffer:
+                                parts = self.buffer.split('\\n')
+                                for part in parts[:-1]: window.appendToOutput(part + '\\n')
+                                self.buffer = parts[-1]
+                        def flush(self):
+                            if self.buffer:
+                                window.appendToOutput(self.buffer)
+                                self.buffer = ""
+
+                    sys.stdout = OutputCapture()
+                    sys.stderr = OutputCapture()
+                `);
+                pyodideInstance = py;
+            } catch (e) {
+                console.error("Pyodide failed to load", e);
+                appendToOutput("❌ فشل تحميل بيئة بايثون. يرجى التحقق من اتصالك بالإنترنت.", 'error');
+            } finally {
+                isPyodideLoading = false;
+            }
+            return pyodideInstance;
+        }
+
+        function openInterpreter() {
+            document.getElementById('interpreter-modal').classList.add('active');
+            if (!pyodideInstance && !isPyodideLoading) {
+                const output = document.getElementById('output-content-modal');
+                output.innerHTML = '<div style="color: #f59e0b;">⏳ جارٍ تحميل بيئة Python...</div>';
+                getPyodide().then(py => {
+                    if(py) output.innerHTML = '<div style="color: #64748b;">✅ بيئة Python جاهزة.</div>';
+                });
+            }
+        }
+
+        function closeInterpreter() {
+            document.getElementById('interpreter-modal').classList.remove('active');
+        }
+
+        function runCodeFromChat(runBtn) {
+            const codeText = runBtn.parentElement.querySelector('.text').innerText;
+            const codeInput = document.getElementById('code-input-modal');
+            if (codeInput) {
+                codeInput.value = codeText;
+                updateLineNumbers(codeInput, 'line-numbers-modal');
+            }
+            openInterpreter();
+            setTimeout(() => runPythonCode('modal'), 200);
+        }
+
+        async function runPythonCode(suffix) {
+            const outputId = 'output-content-' + suffix;
+            const outputElement = document.getElementById(outputId);
+            outputElement.innerHTML = ''; 
+
+            const code = document.getElementById('code-input-' + suffix).value;
+            if (!code.trim()) {
+                appendToOutput('الرجاء إدخال كود أولاً', 'warning');
+                return;
+            }
+
+            appendToOutput('⏳ جارٍ التنفيذ...', 'info');
+            const py = await getPyodide();
+            if (!py) {
+                appendToOutput('❌ فشل تحميل المترجم.', 'error');
+                return;
+            }
+
+            try {
+                if (interruptBuffer) interruptBuffer[0] = 0;
+                await py.runPythonAsync(code);
+            } catch (err) {
+                appendToOutput('❌ خطأ: ' + err.message, 'error');
+            } finally {
+                 py.globals.get('sys').stdout.flush();
+                 py.globals.get('sys').stderr.flush();
+            }
+        }
+
+        function appendToOutput(text, type = 'default') {
+            const output = document.getElementById('output-content-modal');
+            if (!output) return;
+
+            const loadingMsg = output.querySelector('.info-msg');
+            if(loadingMsg) loadingMsg.remove();
+
+            const span = document.createElement('span');
+            span.textContent = text;
+            if (type === 'error') span.style.color = '#ff6b6b';
+            else if (type === 'info') {
+                span.style.color = '#64748b';
+                span.className = 'info-msg';
+            }
+            else if (type === 'warning') span.style.color = '#f59e0b';
+            
+            output.appendChild(span);
+            output.scrollTop = output.scrollHeight;
+        }
+        window.appendToOutput = appendToOutput;
+
+        function clearOutput(suffix) {
+            document.getElementById('output-content-' + suffix).innerHTML = '# مخرجات التنفيذ ستظهر هنا...';
+            const codeInput = document.getElementById('code-input-' + suffix);
+            if (codeInput) {
+                codeInput.value = '';
+                updateLineNumbers(codeInput, 'line-numbers-' + suffix);
+            }
+        }
+
+        function copyInterpreterCode(suffix) {
+            const codeInput = document.getElementById('code-input-' + suffix);
+            if (codeInput && codeInput.value) {
+                navigator.clipboard.writeText(codeInput.value).then(() => {
+                    showToast('تم نسخ الكود بنجاح!', 'success');
+                }).catch(err => {
+                    showToast('فشل نسخ الكود!', 'error');
+                    console.error('Copy failed', err);
+                });
+            } else {
+                showToast('لا يوجد كود لنسخه!', 'warning');
+            }
+        }
+
+        function updateLineNumbers(textarea, lineNumbersId) {
+            const lines = textarea.value.split('\n').length;
+            const lineNumbers = document.getElementById(lineNumbersId);
+            lineNumbers.innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+        }
+
+        // let resolveCustomInputPromise;
+        // function submitCustomInput() {
+        //     const val = document.getElementById('custom-input-field')?.value || "";
+        //     if (resolveCustomInputPromise) { resolveCustomInputPromise(val); resolveCustomInputPromise = null; }
+        //     document.getElementById('custom-input-modal')?.classList.remove('active');
+        // }
+        // function cancelCustomInput() {
+        //     if (resolveCustomInputPromise) { resolveCustomInputPromise(""); resolveCustomInputPromise = null; }
+        //     document.getElementById('custom-input-modal')?.classList.remove('active');
+        // }
+      </script>
+      <script src="script.js"></script>
+</body>
+</html>
